@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Слова на каждый день</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--tx:#1c1c1e;--mu:#6e6e73;--ac:#0a84ff;--ok:#30a46c;--bd:#e5e5ea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--card:#1c1c1e;--tx:#f2f2f7;--mu:#98989f;--ac:#409cff;--ok:#4cc38a;--bd:#2c2c2e}}
+:root[data-theme="dark"]{--bg:#000;--card:#1c1c1e;--tx:#f2f2f7;--mu:#98989f;--ac:#409cff;--ok:#4cc38a;--bd:#2c2c2e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:26px;margin:4px 0 2px}
+.sub{color:var(--mu);font-size:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.chip{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:20px;padding:8px 16px;font-size:15px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.bar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.card{background:var(--card);border-radius:16px;padding:16px;margin:12px 0;border:1px solid var(--bd)}
+.card.done{opacity:.6}
+.w{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.w b{font-size:24px}
+.tag{font-size:12px;color:var(--mu);margin-top:2px}
+.ru{font-size:17px;margin:8px 0}
+.ex{color:var(--mu);margin:4px 0;padding-left:10px;border-left:3px solid var(--bd)}
+.btn{border:0;border-radius:12px;padding:12px;width:100%;font-size:16px;margin-top:10px;background:var(--ac);color:#fff}
+.btn.ok{background:var(--ok)}
+.sp{border:0;background:transparent;font-size:24px}
+.reset{background:none;border:0;color:var(--mu);font-size:13px;margin-top:20px;text-decoration:underline}
+textarea{width:100%;margin:10px 0 6px;padding:10px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:16px -apple-system,system-ui,sans-serif}.ipa{color:var(--ac);font-size:15px}.edit{border:0;background:none;color:var(--mu);font-size:13px;padding:0 0 0 6px}.acts{display:flex;gap:8px}.acts .btn{flex:1}.btn.alt{background:var(--bd);color:var(--tx)}.chart{display:flex;align-items:flex-end;gap:3px;height:110px;margin:12px 0}.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:11px;color:var(--mu)}.col i{display:block;width:100%;background:var(--ac);border-radius:3px 3px 0 0;min-height:2px}.col em{font-style:normal;margin-top:2px}summary{font-weight:600}details .chip{margin:6px 6px 0 0;padding:6px 12px}</style>
+</head>
+<body>
+<main>
+<h1>Слова на каждый день</h1>
+<div class="sub" id="info"></div>
+<div class="row" id="per"></div>
+<div class="bar"><i id="prog"></i></div>
+<div id="list"></div>
+<div class="card" id="stats"></div>
+<details class="card" id="kn"></details>
+<div class="card"><b>Добавить слова</b>
+<textarea id="inp" rows="2" placeholder="Слово или несколько (через запятую или с новой строки)"></textarea>
+<div class="sub" id="st"></div>
+<button class="btn" id="add">Добавить (с проверкой на дубли)</button></div>
+<button class="reset" id="reset">Сбросить прогресс</button>
+</main>
+<script>
+var RAW = `Повседневность|reliable|adj|надёжный|My car is old but very reliable.|You need a reliable internet connection.
+Повседневность|schedule|noun|расписание, график|What’s your schedule for tomorrow?|I’m behind schedule today.
+Повседневность|reach out|phrasal verb|связаться|Feel free to reach out if you have questions.|I’ll reach out to him tomorrow.
+Повседневность|convenient|adj|удобный|Is Friday convenient for you?|The shop is in a convenient location.
+Повседневность|neighborhood|noun|район|It’s a quiet neighborhood.|We moved to a new neighborhood.
+Работа|deadline|noun|крайний срок|The deadline is next Monday.|We missed the deadline.
+Работа|achieve|verb|достигать|She achieved her goal.|It’s hard to achieve much without a plan.
+Работа|workload|noun|рабочая нагрузка|My workload has doubled lately.|They’re trying to reduce the workload.
+Работа|figure out|phrasal verb|разобраться|I can’t figure out this error.|We’ll figure it out together.
+Работа|improve|verb|улучшать|I want to improve my English.|The service has improved a lot.
+Путешествия|book|verb|бронировать|I booked a hotel for three nights.|Book your tickets early.
+Путешествия|luggage|noun|багаж|My luggage got lost.|Is this your carry-on luggage?
+Путешествия|delay|noun / verb|задержка; задерживать|There was a two-hour delay.|The flight was delayed by the storm.
+Путешествия|destination|noun|пункт назначения|Our final destination is Rome.|It’s a popular tourist destination.
+Путешествия|get around|phrasal verb|передвигаться по городу|It’s easy to get around by metro.|How do you get around the city?
+Эмоции|anxious|adj|тревожный, беспокоящийся|I felt anxious before the exam.|She’s anxious about the results.
+Эмоции|grateful|adj|благодарный|I’m grateful for your help.|They were grateful for the support.
+Эмоции|annoying|adj|раздражающий|That noise is really annoying.|It’s annoying when people interrupt.
+Эмоции|proud|adj|гордый|I’m proud of you.|He was proud of his work.
+Эмоции|overwhelmed|adj|захлёстнутый (делами, эмоциями)|I feel overwhelmed with work.|She was overwhelmed by the news.
+Технологии|update|noun / verb|обновление; обновлять|Please update the app.|The update takes ten minutes.
+Технологии|backup|noun|резервная копия|Make a backup of your files.|I keep a backup of all my photos.
+Технологии|glitch|noun|сбой, глюк|There was a glitch in the system.|It’s just a small software glitch.
+Технологии|log in|phrasal verb|войти в систему|I can’t log in to my account.|Please log in again.
+Технологии|download|verb|скачивать|Download the app from the store.|It took a while to download.
+Еда|ingredient|noun|ингредиент|Fresh ingredients really matter.|What’s the main ingredient?
+Еда|leftovers|noun|остатки еды|We had leftovers for lunch.|Do you want the leftovers?
+Еда|bill|noun|счёт (в ресторане)|Can we have the bill, please?|Who’s paying the bill?
+Еда|taste|noun / verb|вкус; иметь вкус|It tastes amazing.|I like the taste of ginger.
+Еда|craving|noun|сильное желание (съесть что-то)|I have a craving for chocolate.|She gets sugar cravings at night.
+Здоровье|sore|adj|болезненный, ноющий|My legs are sore after the run.|I have a sore throat.
+Здоровье|recover|verb|выздоравливать, восстанавливаться|He’s recovering from the flu.|It takes time to recover.
+Здоровье|appointment|noun|запись, приём|I have a doctor’s appointment at 3.|Can I make an appointment?
+Здоровье|habit|noun|привычка|Reading is a good habit.|It’s hard to break a bad habit.
+Здоровье|stress|noun|стресс|Exercise helps reduce stress.|I’m under a lot of stress.
+Общение|misunderstanding|noun|недоразумение|It was just a misunderstanding.|Sorry, there’s been a misunderstanding.
+Общение|suggest|verb|предлагать|I suggest we meet earlier.|She suggested a new idea.
+Общение|agree|verb|соглашаться|I totally agree with you.|We couldn’t agree on a price.
+Общение|mention|verb|упоминать|He didn’t mention the problem.|As I mentioned, we’re running late.
+Общение|catch up|phrasal verb|наверстать; пообщаться после перерыва|Let’s catch up over coffee.|I need to catch up on emails.
+Повседневность|chore|noun|домашняя обязанность|I do my chores on Saturday.|Washing dishes is my least favorite chore.|tʃɔr
+Повседневность|commute|noun / verb|дорога на работу; ездить на работу|My commute takes forty minutes.|She commutes by train every day.|kəˈmjut
+Повседневность|borrow|verb|брать взаймы|Can I borrow your charger?|He borrowed a book from the library.|ˈbɑroʊ
+Повседневность|lend|verb|одалживать|Could you lend me ten euros?|I lent him my umbrella.|lɛnd
+Повседневность|run out of|phrasal verb|закончиться (о запасах)|We ran out of milk.|I’m running out of time.|rʌn aʊt ʌv
+Повседневность|pick up|phrasal verb|забрать; подхватить|I’ll pick you up at six.|She picked up the language quickly.|pɪk ʌp
+Повседневность|hang out|phrasal verb|проводить время, тусоваться|We often hang out on weekends.|Do you want to hang out tonight?|hæŋ aʊt
+Повседневность|neighbor|noun|сосед|My neighbor is very friendly.|The neighbors were making noise.|ˈneɪbɚ
+Повседневность|landlord|noun|арендодатель|My landlord raised the rent.|The landlord fixed the heating.|ˈlændˌlɔrd
+Повседневность|postpone|verb|откладывать, переносить|We had to postpone the meeting.|The trip was postponed until May.|poʊstˈpoʊn
+Повседневность|spare|adj|запасной, свободный|Do you have a spare key?|I have some spare time today.|spɛr
+Повседневность|apologize|verb|извиняться|I apologize for being late.|He apologized to everyone.|əˈpɑləˌdʒaɪz
+Работа|colleague|noun|коллега|My colleagues are great.|I’ll ask a colleague for help.|ˈkɑliɡ
+Работа|attend|verb|посещать, присутствовать|Will you attend the meeting?|About fifty people attended.|əˈtɛnd
+Работа|handle|verb|справляться, заниматься|I can handle this task.|She handles customer complaints.|ˈhændəl
+Работа|priority|noun|приоритет|Safety is our top priority.|Let’s set our priorities.|praɪˈɔrəti
+Работа|feedback|noun|обратная связь|Thanks for the feedback.|I’d like your feedback on my report.|ˈfidˌbæk
+Работа|apply for|phrasal verb|подавать заявку|She applied for a new job.|I’m going to apply for a visa.|əˈplaɪ fɔr
+Работа|resign|verb|уволиться по собственному желанию|He resigned last month.|She resigned from her position.|rɪˈzaɪn
+Работа|promote|verb|повышать в должности; продвигать|She was promoted to manager.|We promote our products online.|prəˈmoʊt
+Работа|follow up|phrasal verb|вернуться к вопросу, уточнить|I’ll follow up on this tomorrow.|Let me follow up with the client.|ˈfɑloʊ ʌp
+Работа|task|noun|задача|This task is quite urgent.|I finished all my tasks today.|tæsk
+Работа|skill|noun|навык|Communication is a key skill.|He has great technical skills.|skɪl
+Работа|take over|phrasal verb|взять на себя, принять управление|She’ll take over the project.|Who took over after him?|teɪk ˈoʊvɚ
+Путешествия|passport|noun|паспорт|Don’t forget your passport.|My passport expires next year.|ˈpæsˌpɔrt
+Путешествия|check in|phrasal verb|регистрироваться|We checked in at the hotel at noon.|You can check in online.|tʃɛk ɪn
+Путешествия|board|verb|садиться (на самолёт, поезд)|Passengers are now boarding.|We board at gate twelve.|bɔrd
+Путешествия|itinerary|noun|маршрут, план поездки|Here’s our itinerary for the trip.|The itinerary includes three cities.|aɪˈtɪnəˌrɛri
+Путешествия|sightseeing|noun|осмотр достопримечательностей|We went sightseeing all day.|Sightseeing in Rome was amazing.|ˈsaɪtˌsiɪŋ
+Путешествия|fare|noun|стоимость проезда|The bus fare is two euros.|Train fares went up again.|fɛr
+Путешествия|souvenir|noun|сувенир|I bought a souvenir for my mom.|They sell souvenirs near the beach.|ˌsuvəˈnɪr
+Путешествия|abroad|adv|за границей|She studied abroad for a year.|I’ve never been abroad.|əˈbrɔd
+Путешествия|set off|phrasal verb|отправиться в путь|We set off early in the morning.|They set off for the mountains.|sɛt ɔf
+Путешествия|view|noun|вид|The view from the hotel was great.|We had a view of the sea.|vju
+Путешествия|crowded|adj|многолюдный|The metro was crowded.|It’s a crowded beach in summer.|ˈkraʊdɪd
+Путешествия|cancel|verb|отменять|They canceled our flight.|I need to cancel my reservation.|ˈkænsəl
+Эмоции|relieved|adj|почувствовавший облегчение|I was relieved to hear the news.|She looked relieved.|rɪˈlivd
+Эмоции|embarrassed|adj|смущённый|I was embarrassed by my mistake.|He felt embarrassed in front of everyone.|ɪmˈbɛrəst
+Эмоции|disappointed|adj|разочарованный|I’m disappointed with the result.|She was disappointed he didn’t call.|ˌdɪsəˈpɔɪntɪd
+Эмоции|nervous|adj|нервничающий|I’m nervous about the interview.|He gets nervous before presentations.|ˈnɝvəs
+Эмоции|jealous|adj|завидующий, ревнивый|She’s jealous of her sister’s success.|Don’t be jealous.|ˈdʒɛləs
+Эмоции|upset|adj|расстроенный|He was upset about the news.|Why are you so upset?|ʌpˈsɛt
+Эмоции|cheer up|phrasal verb|взбодриться; подбодрить|Cheer up, things will get better.|I bought flowers to cheer her up.|tʃɪr ʌp
+Эмоции|calm down|phrasal verb|успокоиться|Please calm down and explain.|It took her a while to calm down.|kɑm daʊn
+Эмоции|frustrated|adj|раздосадованный|I’m frustrated with this software.|She felt frustrated by the delays.|ˈfrʌstreɪtɪd
+Эмоции|curious|adj|любопытный|I’m curious about your plans.|Children are naturally curious.|ˈkjʊriəs
+Эмоции|lonely|adj|одинокий|He felt lonely in a new city.|Many people feel lonely at night.|ˈloʊnli
+Эмоции|thrilled|adj|в восторге|We’re thrilled about the news.|She was thrilled to win.|θrɪld
+Технологии|install|verb|устанавливать|Install the latest version.|I need to install a new app.|ɪnˈstɔl
+Технологии|delete|verb|удалять|I accidentally deleted the file.|Delete the old messages.|dɪˈlit
+Технологии|password|noun|пароль|I forgot my password.|Use a strong password.|ˈpæsˌwɝd
+Технологии|battery|noun|батарея, аккумулятор|My phone battery is dead.|The battery lasts all day.|ˈbætəri
+Технологии|charge|verb|заряжать|I need to charge my phone.|It takes an hour to charge.|tʃɑrdʒ
+Технологии|crash|verb / noun|вылетать; сбой|The app keeps crashing.|The crash cost us hours.|kræʃ
+Технологии|settings|noun|настройки|Open the settings menu.|Check your privacy settings.|ˈsɛtɪŋz
+Технологии|notification|noun|уведомление|I turned off notifications.|You have a new notification.|ˌnoʊtəfɪˈkeɪʃən
+Технологии|upload|verb|загружать (на сервер)|Upload the photos to the cloud.|It’s slow to upload large files.|ˈʌpˌloʊd
+Технологии|sign up|phrasal verb|зарегистрироваться|You can sign up for free.|I signed up for the newsletter.|saɪn ʌp
+Технологии|turn off|phrasal verb|выключать|Turn off the lights, please.|I turned off my phone.|tɝn ɔf
+Технологии|device|noun|устройство|Which device are you using?|You can sync your devices.|dɪˈvaɪs
+Еда|recipe|noun|рецепт (блюда)|This recipe is easy.|Can you share the recipe?|ˈrɛsəpi
+Еда|fresh|adj|свежий|The bread is fresh.|I like fresh vegetables.|frɛʃ
+Еда|spicy|adj|острый|This soup is too spicy.|I love spicy food.|ˈspaɪsi
+Еда|delicious|adj|очень вкусный|The cake was delicious.|What a delicious smell!|dɪˈlɪʃəs
+Еда|order|verb / noun|заказывать; заказ|Let’s order pizza.|Our order hasn’t arrived yet.|ˈɔrdɚ
+Еда|tip|noun|чаевые; совет|We left a ten percent tip.|Thanks for the tip.|tɪp
+Еда|serve|verb|подавать (еду)|They serve breakfast until ten.|Serve it hot.|sɝv
+Еда|chop|verb|нарезать|Chop the onions finely.|She chopped the carrots.|tʃɑp
+Еда|boil|verb|кипятить, варить|Boil the water first.|I boiled two eggs.|bɔɪl
+Еда|snack|noun|перекус|I grabbed a quick snack.|Do you have any healthy snacks?|snæk
+Еда|starving|adj|умирающий от голода|I’m starving!|We were starving after the hike.|ˈstɑrvɪŋ
+Еда|split|verb|делить (например, счёт)|Let’s split the bill.|We split the pizza.|splɪt
+Здоровье|exercise|noun / verb|упражнение; заниматься спортом|I exercise three times a week.|Regular exercise is important.|ˈɛksɚˌsaɪz
+Здоровье|exhausted|adj|измотанный|I’m exhausted after work.|She looked exhausted.|ɪɡˈzɔstɪd
+Здоровье|headache|noun|головная боль|I have a terrible headache.|Stress can cause headaches.|ˈhɛdˌeɪk
+Здоровье|prescription|noun|рецепт (врача)|I need a prescription for this.|The doctor wrote me a prescription.|prɪˈskrɪpʃən
+Здоровье|symptom|noun|симптом|What are your symptoms?|A cough is a common symptom.|ˈsɪmptəm
+Здоровье|injury|noun|травма|He missed the game due to an injury.|The injury healed quickly.|ˈɪndʒəri
+Здоровье|allergic|adj|аллергичный|I’m allergic to nuts.|Is she allergic to cats?|əˈlɝdʒɪk
+Здоровье|work out|phrasal verb|тренироваться; получаться|I work out at the gym.|Things worked out well.|wɝk aʊt
+Здоровье|get over|phrasal verb|оправиться (от болезни, шока)|It took me a week to get over the flu.|She got over the shock.|ɡɛt ˈoʊvɚ
+Здоровье|diet|noun|диета, рацион|I’m trying to eat a balanced diet.|He’s on a strict diet.|ˈdaɪət
+Здоровье|healthy|adj|здоровый, полезный|Try to stay healthy.|This is a healthy breakfast.|ˈhɛlθi
+Здоровье|rest|noun / verb|отдых; отдыхать|You need some rest.|I’ll rest for an hour.|rɛst
+Общение|explain|verb|объяснять|Can you explain this to me?|She explained the rules.|ɪkˈspleɪn
+Общение|argue|verb|спорить|They argued about money.|I don’t want to argue.|ˈɑrɡju
+Общение|admit|verb|признавать|I admit I was wrong.|He admitted the mistake.|ædˈmɪt
+Общение|promise|verb / noun|обещать; обещание|I promise to call you.|He kept his promise.|ˈprɑmɪs
+Общение|invite|verb|приглашать|They invited us to dinner.|I’d like to invite you to the party.|ɪnˈvaɪt
+Общение|get along|phrasal verb|ладить|I get along well with my sister.|Do you get along with your boss?|ɡɛt əˈlɔŋ
+Общение|complain|verb|жаловаться|He always complains about the weather.|I’d like to complain about the service.|kəmˈpleɪn
+Общение|hint|noun|намёк|Can you give me a hint?|I took the hint and left.|hɪnt
+Общение|gossip|noun / verb|сплетни; сплетничать|I don’t like office gossip.|They were gossiping about him.|ˈɡɑsɪp
+Общение|reply|verb / noun|отвечать; ответ|I’ll reply tomorrow.|I haven’t had a reply yet.|rɪˈplaɪ
+Общение|point out|phrasal verb|указать на|She pointed out my mistake.|Let me point out one problem.|pɔɪnt aʊt
+Общение|let down|phrasal verb|подвести|I don’t want to let you down.|He felt he had let them down.|lɛt daʊn
+Деньги|afford|verb|позволить себе (по деньгам)|I can’t afford a new car.|Can we afford a vacation?|əˈfɔrd
+Деньги|budget|noun|бюджет|We’re on a tight budget.|Let’s stay within the budget.|ˈbʌdʒɪt
+Деньги|refund|noun / verb|возврат денег|I asked for a refund.|They refunded my money.|ˈrifʌnd
+Деньги|receipt|noun|чек|Keep the receipt.|Can I see your receipt?|rɪˈsit
+Повседневность|routine|noun|распорядок, рутина|I have a morning routine.|It’s hard to break the routine.|ruˈtin
+Повседневность|on time|phrase|вовремя|Please arrive on time.|The train left on time.|ɑn taɪm
+Повседневность|miss|verb|пропускать; скучать|I missed the bus.|I miss my family.|mɪs
+Повседневность|rely on|phrasal verb|полагаться на|You can rely on me.|I rely on public transport.|rɪˈlaɪ ɑn
+Повседневность|look forward to|phrasal verb|с нетерпением ждать|I’m looking forward to the weekend.|We look forward to seeing you.|lʊk ˈfɔrwɚd tu
+Повседневность|used to|phrase|раньше (о привычке в прошлом)|I used to live in Berlin.|We used to play chess every day.|ˈjust tu
+Повседневность|on purpose|phrase|нарочно, специально|I didn’t do it on purpose.|He broke it on purpose.|ɑn ˈpɝpəs
+Повседневность|in a hurry|phrase|торопиться|Sorry, I’m in a hurry.|She left in a hurry.|ɪn ə ˈhɝi
+Работа|manage|verb|управлять; справляться|She manages a small team.|I managed to finish on time.|ˈmænɪdʒ
+Работа|propose|verb|предлагать (план)|I propose a different approach.|He proposed a new schedule.|prəˈpoʊz
+Работа|negotiate|verb|вести переговоры|They negotiated a better price.|I’m negotiating my salary.|nɪˈɡoʊʃiˌeɪt
+Работа|contract|noun|договор, контракт|She signed a two-year contract.|Read the contract carefully.|ˈkɑnˌtrækt
+Работа|salary|noun|зарплата|His salary is quite high.|They offered me a good salary.|ˈsæləri
+Работа|hire|verb|нанимать|We’re hiring new engineers.|They hired her last week.|ˈhaɪɚ
+Работа|report|noun / verb|отчёт; докладывать|I’ll send you the report.|Please report any problems.|rɪˈpɔrt
+Работа|on track|phrase|по плану, в графике|The project is on track.|We’re still on track to finish.|ɑn træk
+Работа|look into|phrasal verb|изучить, разобраться|I’ll look into the issue.|They are looking into it.|lʊk ˈɪntu
+Работа|turn down|phrasal verb|отклонить|He turned down the offer.|She turned down the job.|tɝn daʊn
+Путешествия|reservation|noun|бронь|I have a reservation under Smith.|Can I change my reservation?|ˌrɛzɚˈveɪʃən
+Путешествия|departure|noun|отправление, вылет|The departure is at nine.|Check the departure board.|dɪˈpɑrtʃɚ
+Путешествия|arrival|noun|прибытие|Our arrival was delayed.|The arrival time is six.|əˈraɪvəl
+Путешествия|customs|noun|таможня|We went through customs quickly.|Customs checked our bags.|ˈkʌstəmz
+Путешествия|sold out|phrase|распродано|The tickets are sold out.|The hotel was sold out.|soʊld aʊt
+Путешествия|drop off|phrasal verb|подвезти, высадить|Can you drop me off here?|I dropped off my bag.|drɑp ɔf
+Эмоции|confident|adj|уверенный|I feel confident about the test.|She’s a confident speaker.|ˈkɑnfədənt
+Эмоции|stressed out|adj|на нервах, в стрессе|I’m really stressed out.|He looked stressed out.|strɛst aʊt
+Эмоции|bored|adj|скучающий|I’m bored at home.|The kids got bored quickly.|bɔrd
+Эмоции|excited|adj|взволнованный (радостно)|I’m excited about the trip.|They were excited to see us.|ɪkˈsaɪtɪd
+Эмоции|worried|adj|обеспокоенный|I’m worried about him.|Don’t be worried.|ˈwɝid
+Эмоции|guilty|adj|виноватый|I feel guilty about it.|He looked guilty.|ˈɡɪlti
+Эмоции|mood|noun|настроение|She’s in a good mood.|I’m not in the mood to talk.|mud
+Эмоции|cope with|phrasal verb|справляться (с трудностями)|How do you cope with stress?|She coped with the loss well.|koʊp wɪð
+Технологии|browser|noun|браузер|Open it in a different browser.|Update your browser.|ˈbraʊzɚ
+Технологии|screenshot|noun|скриншот|I took a screenshot.|Send me a screenshot of the error.|ˈskrinˌʃɑt
+Технологии|attachment|noun|вложение|I opened the attachment.|The attachment is too large.|əˈtætʃmənt
+Технологии|bug|noun|ошибка в программе|We found a bug in the code.|The bug is fixed.|bʌɡ
+Технологии|connect|verb|подключать(ся)|I can’t connect to Wi-Fi.|Connect the cable first.|kəˈnɛkt
+Технологии|restart|verb|перезапускать|Try restarting your phone.|The computer restarted itself.|riˈstɑrt
+Технологии|storage|noun|память, хранилище|My phone is out of storage.|We use cloud storage.|ˈstɔrɪdʒ
+Технологии|security|noun|безопасность|Online security matters.|They improved the security.|sɪˈkjʊrəti
+Технологии|shut down|phrasal verb|выключиться, завершить работу|The laptop suddenly shut down.|They shut down the old server.|ʃʌt daʊn
+Технологии|sync|verb|синхронизировать|Sync your files across devices.|The data syncs automatically.|sɪŋk
+Еда|appetite|noun|аппетит|I have no appetite today.|The walk gave me an appetite.|ˈæpɪˌtaɪt
+Еда|flavor|noun|вкус, аромат|I love the flavor of lemon.|The soup has a rich flavor.|ˈfleɪvɚ
+Еда|raw|adj|сырой|Don’t eat raw chicken.|She likes raw vegetables.|rɔ
+Еда|bake|verb|печь (в духовке)|I baked a cake yesterday.|Bake it for twenty minutes.|beɪk
+Еда|grocery|noun|продукты (покупки)|I need to buy groceries.|There’s a grocery store nearby.|ˈɡroʊsri
+Еда|takeout|noun|еда навынос|Let’s get takeout tonight.|We ordered Chinese takeout.|ˈteɪkˌaʊt
+Здоровье|fever|noun|температура, жар|He has a high fever.|The fever went down.|ˈfivɚ
+Здоровье|pain|noun|боль|I feel pain in my back.|The pain is getting worse.|peɪn
+Здоровье|stretch|verb|растягиваться|Stretch before you run.|She stretched her arms.|strɛtʃ
+Здоровье|dizzy|adj|испытывающий головокружение|I feel a bit dizzy.|He got dizzy and sat down.|ˈdɪzi
+Здоровье|sleep in|phrasal verb|поспать подольше|I like to sleep in on Sundays.|We slept in this morning.|slip ɪn
+Здоровье|check-up|noun|медосмотр|I have a check-up tomorrow.|It’s time for your yearly check-up.|ˈtʃɛkˌʌp
+Здоровье|fit|adj|в хорошей форме|I’m trying to stay fit.|He looks very fit.|fɪt
+Здоровье|cut back on|phrasal verb|сократить потребление|I’m cutting back on sugar.|Try to cut back on coffee.|kʌt bæk ɑn
+Общение|discuss|verb|обсуждать|Let’s discuss the details.|We discussed it for an hour.|dɪˈskʌs
+Общение|convince|verb|убеждать|I couldn’t convince him.|She convinced me to try it.|kənˈvɪns
+Общение|ignore|verb|игнорировать|He ignored my message.|Don’t ignore the problem.|ɪɡˈnɔr
+Общение|remind|verb|напоминать|Remind me to call her.|This song reminds me of summer.|rɪˈmaɪnd
+Общение|interrupt|verb|перебивать|Sorry to interrupt you.|Please don’t interrupt me.|ˌɪntəˈrʌpt
+Общение|reasonable|adj|разумный|That sounds reasonable.|It’s a reasonable price.|ˈrizənəbəl
+Общение|come up with|phrasal verb|придумать|She came up with a great idea.|Can you come up with a better plan?|kʌm ʌp wɪð
+Общение|bring up|phrasal verb|поднять тему|Don’t bring up politics.|He brought up the issue again.|brɪŋ ʌp
+Деньги|save|verb|копить, экономить|I’m saving for a trip.|You can save time this way.|seɪv
+Деньги|spend|verb|тратить|I spend too much on coffee.|We spent the weekend at home.|spɛnd
+Деньги|expensive|adj|дорогой|That watch is too expensive.|Rent here is expensive.|ɪkˈspɛnsɪv
+Деньги|cheap|adj|дешёвый|The tickets were cheap.|It’s cheap but good.|tʃip
+Деньги|pay off|phrasal verb|выплатить; окупиться|I paid off my loan.|Hard work pays off.|peɪ ɔf
+Деньги|worth|adj|стоящий|It’s worth the money.|The movie is worth watching.|wɝθ
+Дом|rent|verb / noun|снимать; арендная плата|We rent a small flat.|The rent is due on Friday.|rɛnt
+Дом|furniture|noun|мебель|We bought new furniture.|The furniture is quite old.|ˈfɝnɪtʃɚ
+Дом|appliance|noun|бытовой прибор|This kitchen appliance is new.|A washing machine is a useful appliance.|əˈplaɪəns
+Дом|move in|phrasal verb|въехать, переехать|We moved in last week.|When can you move in?|muv ɪn
+Дом|clean up|phrasal verb|убраться|Let’s clean up the kitchen.|I cleaned up after the party.|klin ʌp
+Дом|repair|verb / noun|ремонтировать; ремонт|I need to repair my bike.|The repair took two days.|rɪˈpɛr
+Дом|cozy|adj|уютный|It’s a cozy little room.|We spent a cozy evening at home.|ˈkoʊzi
+Дом|yard|noun|двор|The kids play in the yard.|We have a small yard.|jɑrd
+Погода и природа|forecast|noun|прогноз|The forecast says rain.|Check the weather forecast.|ˈfɔrˌkæst
+Погода и природа|humid|adj|влажный|It’s hot and humid today.|The air feels humid.|ˈhjumɪd
+Погода и природа|breeze|noun|лёгкий ветерок|There’s a nice breeze today.|A cool breeze came from the sea.|briz
+Погода и природа|pour|verb|лить; идти (о ливне)|It’s pouring outside.|She poured me some tea.|pɔr
+Погода и природа|freezing|adj|ледяной, очень холодно|It’s freezing today.|My hands are freezing.|ˈfrizɪŋ
+Погода и природа|hike|noun / verb|поход; ходить в поход|We went for a hike.|They hike every weekend.|haɪk
+Погода и природа|wildlife|noun|дикая природа|The park is full of wildlife.|We saw some wildlife.|ˈwaɪldˌlaɪf
+Погода и природа|clear up|phrasal verb|проясниться (о погоде)|The sky cleared up.|I hope it clears up soon.|klɪr ʌp
+Люди и характер|honest|adj|честный|Be honest with me.|He’s an honest person.|ˈɑnɪst
+Люди и характер|generous|adj|щедрый|She’s very generous.|He left a generous tip.|ˈdʒɛnərəs
+Люди и характер|stubborn|adj|упрямый|He’s too stubborn to listen.|My dad is stubborn.|ˈstʌbɚn
+Люди и характер|polite|adj|вежливый|He’s always polite.|It’s polite to say thanks.|pəˈlaɪt
+Люди и характер|shy|adj|застенчивый|She was shy at first.|He’s a shy kid.|ʃaɪ
+Люди и характер|supportive|adj|поддерживающий|My family is very supportive.|She’s a supportive friend.|səˈpɔrtɪv
+Люди и характер|outgoing|adj|общительный|He’s a very outgoing person.|She’s outgoing and friendly.|ˈaʊtˌɡoʊɪŋ
+Люди и характер|take after|phrasal verb|быть похожим (на родителей)|She takes after her mother.|He takes after his dad.|teɪk ˈæftɚ
+Люди и характер|look up to|phrasal verb|уважать, равняться|I look up to my teacher.|Kids look up to their parents.|lʊk ʌp tu
+Люди и характер|patient|adj|терпеливый|Please be patient.|She’s a patient teacher.|ˈpeɪʃənt
+Учёба|assignment|noun|задание|I finished the assignment.|The assignment is due Friday.|əˈsaɪnmənt
+Учёба|review|verb|повторять; пересматривать|I need to review my notes.|Let’s review the lesson.|rɪˈvju
+Учёба|memorize|verb|заучивать|I memorized all the words.|It’s hard to memorize numbers.|ˈmɛməˌraɪz
+Учёба|get used to|phrase|привыкать|I’m getting used to the new job.|You’ll get used to it.|ɡɛt ˈjust tu`;
+
+var IPA={"reliable":"rɪˈlaɪəbəl","schedule":"ˈskɛdʒuːl","reach out":"ˈriːtʃ aʊt","convenient":"kənˈviːniənt","neighborhood":"ˈneɪbərˌhʊd","deadline":"ˈdɛdˌlaɪn","achieve":"əˈtʃiːv","workload":"ˈwɝːkˌloʊd","figure out":"ˈfɪɡjɚ aʊt","improve":"ɪmˈpruːv","book":"bʊk","luggage":"ˈlʌɡɪdʒ","delay":"dɪˈleɪ","destination":"ˌdɛstəˈneɪʃən","get around":"ɡɛt əˈraʊnd","anxious":"ˈæŋkʃəs","grateful":"ˈɡreɪtfəl","annoying":"əˈnɔɪɪŋ","proud":"praʊd","overwhelmed":"ˌoʊvɚˈwɛlmd","update":"ˈʌpdeɪt, ʌpˈdeɪt","backup":"ˈbækʌp","glitch":"ɡlɪtʃ","log in":"lɔɡ ɪn","download":"ˈdaʊnˌloʊd","ingredient":"ɪnˈɡriːdiənt","leftovers":"ˈlɛftˌoʊvɚz","bill":"bɪl","taste":"teɪst","craving":"ˈkreɪvɪŋ","sore":"sɔr","recover":"rɪˈkʌvɚ","appointment":"əˈpɔɪntmənt","habit":"ˈhæbɪt","stress":"strɛs","misunderstanding":"ˌmɪsʌndɚˈstændɪŋ","suggest":"səɡˈdʒɛst","agree":"əˈɡri","mention":"ˈmɛnʃən","catch up":"kætʃ ʌp"};
+var BASE=RAW.split("\n").map(l=>{var p=l.split("|");return{k:p[1].toLowerCase(),w:p[1],c:p[0],t:p[2],ru:p[3],ex:[p[4],p[5]],ipa:p[6]||IPA[p[1]]||""}});
+var K="words_v2";
+function load(){try{return JSON.parse(localStorage.getItem(K))||{}}catch(e){return{}}}
+var S=Object.assign({per:5,deck:[],done:[],full:[],custom:[],meta:{},known:{},doneAt:{},last:null},load());
+delete S.queue;delete S.ptr;delete S.days;
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+var MAP={};BASE.concat(S.custom).forEach(x=>MAP[x.k]=x);
+function ds(d){return d.toLocaleDateString("sv")}
+var T=ds(new Date());
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function norm(s){return s.toLowerCase().replace(/’/g,"'").trim().replace(/\s+/g," ")}
+function rnd(n){return Math.floor(Math.random()*n)}
+function view(k){var it=MAP[k],m=S.meta[k]||{};return{w:it.w,c:it.c,t:m.t||it.t||"",ru:m.ru||it.ru||"",ipa:m.ipa||it.ipa||"",ex:(m.ex&&m.ex.length)?m.ex:(it.ex||[]).filter(Boolean),audio:m.audio||""}}
+// лента: перемешанная колода; новые слова вставляются в случайные места
+function inPool(k){return MAP[k]&&!S.known[k]&&S.done.indexOf(k)<0}
+function syncDeck(){var seen={};S.deck=S.deck.filter(k=>inPool(k)&&!seen[k]&&(seen[k]=1));
+ Object.keys(MAP).filter(k=>inPool(k)&&!seen[k]).forEach(k=>S.deck.splice(rnd(S.deck.length+1),0,k))}
+function cur(){return S.deck[0]}
+function todayN(){return S.done.filter(x=>S.doneAt[x]==T).length}
+function chk(){var n=todayN(),j=S.full.indexOf(T);if(n>=S.per&&j<0)S.full.push(T);if(n<S.per&&j>=0)S.full.splice(j,1)}
+function act(a){var k=cur();if(!k)return;S.deck.shift();
+ if(a=="done"){S.done.push(k);S.doneAt[k]=T}
+ else if(a=="know"){S.known[k]=T}
+ else{var n=S.deck.length;S.deck.splice(n<6?n:5+rnd(n-4),0,k)}
+ S.last={k:k,a:a};chk();save();render()}
+function undo(){var l=S.last;if(!l)return;var k=l.k,i=S.done.indexOf(k);S.deck=S.deck.filter(x=>x!=k);S.deck.unshift(k);
+ if(i>=0)S.done.splice(i,1);delete S.doneAt[k];delete S.known[k];S.last=null;chk();save();render()}
+function unknow(k){delete S.known[k];S.deck.splice(rnd(Math.min(8,S.deck.length)+1),0,k);save();render()}
+function setPer(n){S.per=n;chk();save();render()}
+function streak(){var n=0,d=new Date();if(S.full.indexOf(ds(d))<0)d=new Date(Date.now()-864e5);while(S.full.indexOf(ds(d))>=0){n++;d=new Date(d.getTime()-864e5)}return n}
+// озвучка: живая запись (если есть), иначе лучший доступный голос en-US
+var VOICE=null;
+function pickVoice(){var v=speechSynthesis.getVoices().filter(x=>/^en[-_]US/i.test(x.lang));
+ for(var p of [/premium/i,/enhanced/i,/samantha|ava|allison|evan|nathan/i]){var f=v.find(x=>p.test(x.name));if(f){VOICE=f;return}}VOICE=v[0]||null}
+try{speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}catch(e){}
+function tts(t){try{speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="en-US";if(VOICE)u.voice=VOICE;u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
+var AU=null;
+function say(k){var v=view(k);if(v.audio){try{if(AU)AU.pause();AU=new Audio(v.audio);AU.play().catch(()=>tts(v.w));return}catch(e){}}tts(v.w)}
+// транскрипция: американское произношение из словаря CMU (через Datamuse), ARPAbet переводится в IPA
+var AV={AA:"ɑ",AE:"æ",AH:"ʌ",AO:"ɔ",AW:"aʊ",AY:"aɪ",EH:"ɛ",ER:"ɝ",EY:"eɪ",IH:"ɪ",IY:"i",OW:"oʊ",OY:"ɔɪ",UH:"ʊ",UW:"u"},
+AC={B:"b",CH:"tʃ",D:"d",DH:"ð",F:"f",G:"ɡ",HH:"h",JH:"dʒ",K:"k",L:"l",M:"m",N:"n",NG:"ŋ",P:"p",R:"r",S:"s",SH:"ʃ",T:"t",TH:"θ",V:"v",W:"w",Y:"j",Z:"z",ZH:"ʒ"};
+function okc(a,b){return(["P","B","T","D","K","G","F","TH","SH","V"].indexOf(a)>=0&&["L","R","W"].indexOf(b)>=0&&!(b=="L"&&(a=="T"||a=="D")))||(a=="S"&&["P","T","K","M","N","F","L","W"].indexOf(b)>=0)}
+function arpa(p){var t=p.trim().split(/\s+/).map(x=>{var m=x.match(/^([A-Z]+)(\d)?$/);return m&&(AV[m[1]]||AC[m[1]])?{b:m[1],s:m[2]||"",v:!!AV[m[1]]}:null});
+ if(!t.length||t.indexOf(null)>=0)return"";
+ t.forEach(x=>{x.ph=x.v?(x.b=="AH"&&x.s=="0"?"ə":x.b=="ER"&&x.s=="0"?"ɚ":AV[x.b]):AC[x.b]});
+ var mk={};t.forEach((x,i)=>{if(x.v&&(x.s=="1"||x.s=="2")){var j=i;while(j>0&&!t[j-1].v)j--;var o=i;
+  if(j==0)o=0;else if(j<i){o=i-1;if(i-j>=2&&okc(t[i-2].b,t[i-1].b)){o=i-2;if(i-j>=3&&t[i-3].b=="S"&&["P","T","K"].indexOf(t[i-2].b)>=0)o=i-3}}
+  mk[o]=x.s=="1"?"ˈ":"ˌ"}});
+ return t.map((x,i)=>(mk[i]||"")+x.ph).join("")}
+var TC={};
+async function tokIpa(t){if(TC[t]!==undefined)return TC[t];var r=await fetch("https://api.datamuse.com/words?sp="+encodeURIComponent(t)+"&md=r&max=1"),j=await r.json(),w=j[0],pr="";
+ if(w&&w.word==t){var tg=(w.tags||[]).find(x=>x.indexOf("pron:")==0);if(tg)pr=arpa(tg.slice(5))}return TC[t]=pr}
+async function ipaOf(k){var o=[];for(var t of k.split(/[\s-]+/)){var p=await tokIpa(t);if(!p)return"";o.push(p)}return o.join(" ")}
+// автозаполнение: транскрипция, запись произношения, примеры, перевод
+var tr={};
+async function enrich(k){var m=S.meta[k]=S.meta[k]||{};if(tr[k]||(m.tried||0)>=3)return 0;tr[k]=1;var v=view(k),net=0,ch=0;
+ try{if(!v.ipa){var p=await ipaOf(k);net=1;if(p){m.ipa=p;v.ipa=p;ch=1}}}catch(e){}
+ try{if(!v.ex.length||!v.t||!v.audio||!v.ipa){var r=await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(k));net=1;
+  if(r.ok){var j=(await r.json())[0],ph=j.phonetics||[],au=ph.filter(p=>p.audio),a=au.find(p=>/-us\./.test(p.audio))||au[0];
+   if(a&&!m.audio){m.audio=a.audio;ch=1}
+   var pi=ph.find(p=>p.text);if(pi&&!v.ipa){m.ipa=pi.text.replace(/\//g,"");ch=1}
+   if(!v.t&&j.meanings&&j.meanings[0]){m.t=j.meanings[0].partOfSpeech;ch=1}
+   if(!v.ex.length){var ex=[];(j.meanings||[]).forEach(mm=>mm.definitions.forEach(d=>{if(d.example&&ex.length<2)ex.push(d.example)}));if(ex.length){m.ex=ex;ch=1}}}}}catch(e){}
+ try{if(!v.ru){var r2=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(k)+"&langpair=en|ru"),j2=await r2.json(),t2=j2.responseData&&j2.responseData.translatedText;net=1;
+  if(t2&&t2.toLowerCase()!=k){m.ru=t2;ch=1}}}catch(e){}
+ if(net)m.tried=(m.tried||0)+1;save();return ch}
+function pre(){S.deck.slice(0,3).forEach(k=>enrich(k).then(ch=>{if(ch&&k==cur())render()}))}
+async function enrichAll(keys,label){var st=document.getElementById("st");
+ for(var k of keys){if(label)st.textContent="Загружаю данные: "+k+"…";await enrich(k)}
+ if(label)st.textContent="Готово.";render()}
+function stats(){var c={},days=[];S.done.forEach(k=>{var d=S.doneAt[k];if(d)c[d]=(c[d]||0)+1});
+ for(var i=13;i>=0;i--){var d=ds(new Date(Date.now()-i*864e5));days.push([d,c[d]||0])}
+ var mx=Math.max(1,...days.map(x=>x[1])),kk=Object.keys(S.known);
+ document.getElementById("stats").innerHTML="<b>Статистика</b><div class='sub'>Сегодня выучено: "+(c[T]||0)+" · Всего выучено: "+S.done.length+" · Уже знал: "+kk.length+"</div><div class='chart'>"+days.map(x=>"<div class='col'><span>"+(x[1]||"")+"</span><i style='height:"+(x[1]/mx*70)+"px'></i><em>"+x[0].slice(8)+"</em></div>").join("")+"</div><div class='sub'>Новые выученные слова по дням, 14 дней. Слова из «Уже знаю» не считаются.</div>";
+ document.getElementById("kn").innerHTML="<summary>Слова, которые я знаю ("+kk.length+")</summary>"+(kk.length?kk.map(k=>"<button class='chip' data-r=\""+esc(k)+"\">"+esc(MAP[k]?MAP[k].w:k)+" ↩</button>").join(" "):"<div class='sub'>Пока пусто</div>")}
+function render(){stats();var k=cur(),n=todayN(),h="";
+ document.getElementById("info").textContent="Сегодня: "+n+" из "+S.per+(n>=S.per?" 🎉":"")+" · Серия: "+streak()+" дн. · Осталось новых: "+S.deck.length;
+ document.getElementById("prog").style.width=Math.min(100,n/S.per*100)+"%";
+ document.getElementById("per").innerHTML="<span class='sub'>Цель в день:</span>"+[3,5,10].map(x=>"<button class='chip"+(x===S.per?" on":"")+"' onclick='setPer("+x+")'>"+x+"</button>").join("");
+ if(k){var v=view(k);
+  h="<div class='card' data-k=\""+esc(k)+"\"><div class='w'><div><b>"+esc(v.w)+"</b> <span class='ipa'>"+(v.ipa?"/"+esc(v.ipa)+"/":"")+"</span>"+(v.ipa?"":"<button class='edit' data-a='retry'>↻</button>")+"<div class='tag'>"+esc(v.t)+" · "+esc(v.c)+"</div></div><button class='sp' data-a='say' aria-label='Произнести'>🔊</button></div>"+
+  "<div class='ru'>"+(v.ru?esc(v.ru):"<span class='sub'>перевод не найден</span>")+"<button class='edit' data-a='ru'>✎</button></div>"+
+  v.ex.map(e=>"<div class='ex' data-a='ex'>"+esc(e)+"</div>").join("")+
+  "<div class='acts'><button class='btn' data-a='done'>Выучил</button><button class='btn alt' data-a='know'>Уже знаю</button></div><button class='btn alt' data-a='skip'>Пропустить →</button></div>"}
+ else h="<div class='card sub'>Все слова пройдены. Добавьте новые в форме ниже.</div>";
+ if(S.last&&MAP[S.last.k])h+="<button class='reset' data-a='undo'>↩ Отменить: "+esc(MAP[S.last.k].w)+" ("+({done:"выучил",know:"знаю",skip:"пропуск"}[S.last.a])+")</button>";
+ document.getElementById("list").innerHTML=h;pre()}
+document.getElementById("list").onclick=e=>{var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,c=b.closest(".card"),k=c&&c.dataset.k;
+ if(a=="say")say(k);else if(a=="ex")tts(b.textContent);else if(a=="undo")undo();
+ else if(a=="retry"){tr[k]=0;(S.meta[k]=S.meta[k]||{}).tried=0;enrich(k).then(render)}
+ else if(a=="ru"){var x=prompt("Перевод для «"+MAP[k].w+"»:",view(k).ru);if(x!==null){(S.meta[k]=S.meta[k]||{}).ru=x.trim();save();render()}}
+ else act(a)};
+var inp=document.getElementById("inp"),st=document.getElementById("st");
+function parts(){return inp.value.split(/[\n,;]+/).map(norm).filter(Boolean)}
+inp.oninput=()=>{var p=parts(),h=p.filter(k=>MAP[k]),n=p.filter(k=>!MAP[k]);
+ st.textContent=p.length?(h.length?"Уже есть: "+h.join(", ")+". ":"")+(n.length?"Новые: "+n.join(", "):""):""};
+document.getElementById("add").onclick=()=>{var add=[],dup=[],bad=[];
+ parts().forEach(k=>{if(!/^[a-z][a-z' -]{1,40}$/.test(k)){bad.push(k);return}
+  if(MAP[k]||add.indexOf(k)>=0){dup.push(k);return}
+  var it={k:k,w:k,c:"Мои слова"};S.custom.push(it);MAP[k]=it;S.deck.splice(rnd(Math.min(10,S.deck.length)+1),0,k);add.push(k)});
+ save();inp.value="";
+ var msg=(add.length?"Добавлено: "+add.join(", ")+" (скоро появятся в ленте). ":"")+(dup.length?"Уже были: "+dup.join(", ")+". ":"")+(bad.length?"Не похоже на слово: "+bad.join(", ")+".":"");
+ st.textContent=msg||"Ничего не введено.";render();if(add.length)enrichAll(add,true).then(()=>{st.textContent=msg})};
+document.getElementById("reset").onclick=()=>{if(confirm("Сбросить прогресс? Добавленные слова и список «Уже знаю» останутся.")){S=Object.assign(S,{deck:[],done:[],full:[],doneAt:{},last:null});syncDeck();save();render()}};
+document.getElementById("kn").onclick=e=>{var b=e.target.closest("[data-r]");if(b)unknow(b.dataset.r)};
+syncDeck();save();render();
+enrichAll(S.custom.map(x=>x.k).filter(k=>{var v=view(k);return !v.ipa||!v.ru}));
+</script>
+</body>
+</html>
